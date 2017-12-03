@@ -1,7 +1,9 @@
 # SubsetSelectionCIO
 
-[![Build Status](https://travis-ci.org/jeanpauphilet/SubsetSelectionCIO.jl.svg?branch=master)](https://travis-ci.org/jeanpauphilet/SubsetSelectionCIO.jl)
+SubsetSelection is a Julia package that computes sparse L2-regularized estimators. Sparsity is enforced through explicit cardinality constraint. Supported loss functions for regression are least squares; for classification, logistic and L1 Hinge loss. The algorithm formulates the problem as a pure-integer convex optimization problem and solves it using a cutting plane algorithm.
 
-[![Coverage Status](https://coveralls.io/repos/jeanpauphilet/SubsetSelectionCIO.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/jeanpauphilet/SubsetSelectionCIO.jl?branch=master)
-
-[![codecov.io](http://codecov.io/github/jeanpauphilet/SubsetSelectionCIO.jl/coverage.svg?branch=master)](http://codecov.io/github/jeanpauphilet/SubsetSelectionCIO.jl?branch=master)
+## Quick start
+To install the package:
+```julia
+julia> Pkg.clone("git://github.com/jeanpauphilet/SubsetSelectionCIO.jl.git")
+```
