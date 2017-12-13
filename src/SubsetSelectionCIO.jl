@@ -57,16 +57,13 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ::Float64;
   # Constraints
   @constraint(miop, sum(s)<=k)
 
-  cutCount=1; bestObj=c0; bestSolution=s0[:];
+  cutCount=1
   @constraint(miop, t>= c0 + dot(∇c0, s-s0))
 
   # Outer approximation method for Convex Integer Optimization (CIO)
   function outer_approximation(cb)
     cutCount += 1
     c, ∇c = inner_op(ℓ, Y, X, getvalue(s), γ)
-    if c<bestObj
-      bestObj = c; bestSolution=getvalue(s)[:]
-    end
     @lazyconstraint(cb, t>=c + dot(∇c, s-getvalue(s)))
   end
   addlazycallback(miop, outer_approximation)
