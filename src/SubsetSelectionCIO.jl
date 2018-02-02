@@ -38,14 +38,14 @@ OUTPUT
   cutCount    - Number of cuts needed in the cutting-plane algorithm
   """
 function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ::Float64;
-          indices0=find(x-> x<k/size(X,2), rand(size(X,2))), ΔT_max=60, Gap=0e-3)
+          indices0=find(x-> x<k/size(X,2), rand(size(X,2))), ΔT_max=60, verbose=false, Gap=0e-3)
 
   n = size(Y, 1)
   p = size(X, 2)
   #Info array
 
   miop = Model(solver=GurobiSolver(MIPGap=Gap, TimeLimit=ΔT_max,
-                OutputFlag=1, LazyConstraints=1, Threads=getthreads()))
+                OutputFlag=1*verbose, LazyConstraints=1, Threads=getthreads()))
 
   s0 = zeros(p); s0[indices0]=1
   c0, ∇c0 = inner_op(ℓ, Y, X, s0, γ)
