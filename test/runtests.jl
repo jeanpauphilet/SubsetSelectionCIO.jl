@@ -1,10 +1,8 @@
 using SubsetSelectionCIO
 using Base.Test
-
 using StatsBase
 
 n = 500; p = 1000; k = 10;
-
 indices = sort(sample(1:p, StatsBase.Weights(ones(p)/p), k, replace=false));
 w = sample(-1:2:1, k);
 X = randn(n,p); Y = X[:,indices]*w;
