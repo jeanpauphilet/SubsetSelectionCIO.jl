@@ -37,7 +37,7 @@ OUTPUT
   Gap         - Optimality gap at termination
   cutCount    - Number of cuts needed in the cutting-plane algorithm
   """
-function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ::Float64;
+function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
           indices0=find(x-> x<k/size(X,2), rand(size(X,2))), ΔT_max=60, verbose=false, Gap=0e-3)
 
   n = size(Y, 1)
