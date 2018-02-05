@@ -2,5 +2,4 @@ julia 0.5 0.7-
 Compat 0.17
 Gurobi
 JuMP 0.17
-LIBLINEAR
 SubsetSelection 0.0.3
