@@ -87,7 +87,7 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ::Float64;
   # Find selected regressors and run a standard linear regression with Tikhonov
   # regularization
   indices = find(s->s>0.5, bestSolution)
-  w = recover_primal(ℓ, Y, X[:, indices], γ)
+  w = SubsetSelection.recover_primal(ℓ, Y, X[:, indices], γ)
 
   return indices, w, Δt, status, Gap, cutCount
 end

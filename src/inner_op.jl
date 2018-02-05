@@ -61,21 +61,21 @@ function sparse_inverse(ℓ::LossFunction, Y, X, γ)
   return α
 end
 
-# FUNCTION recover_primal
-"""Computes the Ridge regressor
-
-INPUT
-  ℓ           - LossFunction to use
-  Y           - Vector of observed responses
-  Z           - Matrix of observed features
-  γ           - Regularization parameter
-
-OUTPUT
-  w           - Optimal regressor"""
-function recover_primal(ℓ::OLS, Y, Z, γ)
-  α = sparse_inverse(ℓ, Y, Z, γ)           # Optimal dual variable α
-  return -γ*Z'*α                            # Regressor
-end
+# # FUNCTION recover_primal
+# """Computes the Ridge regressor
+#
+# INPUT
+#   ℓ           - LossFunction to use
+#   Y           - Vector of observed responses
+#   Z           - Matrix of observed features
+#   γ           - Regularization parameter
+#
+# OUTPUT
+#   w           - Optimal regressor"""
+# function recover_primal(ℓ::OLS, Y, Z, γ)
+#   α = sparse_inverse(ℓ, Y, Z, γ)           # Optimal dual variable α
+#   return -γ*Z'*α                            # Regressor
+# end
 
 ####################
 ## CLASSIFICATION
@@ -163,7 +163,7 @@ end
 function start_primal(ℓ::Classification, Y::Array, X::Array, γ::Real)
   n,k = size(X)
 
-  w = recover_primal(ℓ, Y, X, γ)
+  w = SubsetSelection.recover_primal(ℓ, Y, X, γ)
   α = primal2dual(ℓ, Y, X, w)
   return α
 end
@@ -178,26 +178,26 @@ function primal2dual(ℓ::L1SVM, Y, X, w)
   return [-Y[i]*(1-Y[i]*dot(X[i,:], w) > 0) - Y[i]/2*(1-Y[i]*dot(X[i,:], w) == 0) for i in 1:n] #SVM
 end
 
-# FUNCTION recover_primal
-"""Computes the Ridge regressor
-
-INPUT
-  ℓ           - LossFunction to use
-  Y           - Vector of observed responses
-  Z           - Matrix of observed features
-  γ           - Regularization parameter
-
-OUTPUT
-  w           - Optimal regressor"""
-function recover_primal(ℓ::Classification, Y, Z, γ)
-  solverNumber = LibLinearSolver(ℓ)
-  model = linear_train(Y, Z'; verbose=false, C=γ, solver_type=Cint(solverNumber))
-  return Y[1]*model.w
-end
-
-function LibLinearSolver(ℓ::LogReg)
-  return 7
-end
-function LibLinearSolver(ℓ::L1SVM)
-  return 3
-end
+# # FUNCTION recover_primal
+# """Computes the Ridge regressor
+#
+# INPUT
+#   ℓ           - LossFunction to use
+#   Y           - Vector of observed responses
+#   Z           - Matrix of observed features
+#   γ           - Regularization parameter
+#
+# OUTPUT
+#   w           - Optimal regressor"""
+# function recover_primal(ℓ::Classification, Y, Z, γ)
+#   solverNumber = LibLinearSolver(ℓ)
+#   model = linear_train(Y, Z'; verbose=false, C=γ, solver_type=Cint(solverNumber))
+#   return Y[1]*model.w
+# end
+#
+# function LibLinearSolver(ℓ::LogReg)
+#   return 7
+# end
+# function LibLinearSolver(ℓ::L1SVM)
+#   return 3
+# end
