@@ -112,7 +112,7 @@ function inner_op(ℓ::LossFunction, Y, X, s, γ)
   return c, ∇c
 end
 
-using LIBLINEAR
+# using LIBLINEAR
 
 # FUNCTION sparse_inverse
 """Computes the optimal dual variables
