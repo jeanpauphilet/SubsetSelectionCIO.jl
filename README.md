@@ -24,7 +24,7 @@ julia> indices0, w0, Δt, status, Gap, cutCount = oa_formulation(SubsetSelection
 The algorithm returns a set of indices `indices0`, the value of the estimator on the selected features only  `w0`, the time needed to compute the model `Δt`, the status of the MIP solver `status`, the sub-optimality gap `Gap` and the number of cuts required by the cutting-plane algorithm `cutCount`.
 
 For classification, we use +1/-1 labels and the convention 
-`P ( Y = y | X = x ) = 1 / (1+e^{y x^T w})`.
+`P ( Y = y | X = x ) = 1 / (1+e^{- y x^T w})`.
 
 ## Required and optional parameters
 
