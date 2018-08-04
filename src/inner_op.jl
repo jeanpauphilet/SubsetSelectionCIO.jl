@@ -148,7 +148,6 @@ function sparse_inverse(ℓ::Classification, Y, X, γ;
         ∇[find(∇ .== -Inf)] = 0.
 
         learningRate = 2/norm(∇, 1)
-        println(norm(∇, 1))
         α1 = α
         newValue = value - 1.
 
