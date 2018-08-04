@@ -108,7 +108,6 @@ function inner_op(ℓ::LossFunction, Y, X, s, γ)
   for j in 1:p
     ∇c[j] = -γ/2*dot(X[:,j],α)^2
   end
-
   return c, ∇c
 end
 
@@ -138,7 +137,18 @@ function sparse_inverse(ℓ::Classification, Y, X, γ;
     for iter in 1:maxIter
         ∇ = SubsetSelection.grad_dual(ℓ, Y, X, α, indices, n_indices, γ, cache) #Compute gradient
 
+        if norm(∇, 1) <= 1e-14
+          break
+        end
+
+        α[find(∇ .== Inf)] = -Y[find(∇ .== Inf)]*1e-14
+        α[find(∇ .== -Inf)] = -Y[find(∇ .== -Inf)]*(1-1e-14)
+
+        ∇[find(∇ .== Inf)] = 0.
+        ∇[find(∇ .== -Inf)] = 0.
+
         learningRate = 2/norm(∇, 1)
+        println(norm(∇, 1))
         α1 = α
         newValue = value - 1.
 
