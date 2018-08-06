@@ -1,6 +1,6 @@
 module SubsetSelectionCIO
 
-using Gurobi, JuMP, Compat
+using MathProgBase, JuMP, Gurobi, Compat
 
 import Compat.String
 
@@ -10,6 +10,12 @@ export oa_formulation
 
 getthreads() = haskey(ENV, "SLURM_JOB_CPUS_PER_NODE") ? parse(Int, ENV["SLURM_JOB_CPUS_PER_NODE"]) : 0
 
+type NodeData
+    time::Float64  # in seconds since the epoch
+    node::Int
+    obj::Float64
+    bestbound::Float64
+end
 ###########################
 # FUNCTION oa_formulation
 ###########################
@@ -73,6 +79,15 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
     @lazyconstraint(cb, t>=c + dot(∇c, s-getvalue(s)))
   end
   addlazycallback(miop, outer_approximation)
+
+  bbdata = NodeData[]
+  function infocallback(cb)
+      node      = MathProgBase.cbgetexplorednodes(cb)
+      obj       = MathProgBase.cbgetobj(cb)
+      bestbound = MathProgBase.cbgetbestbound(cb)
+      push!(bbdata, NodeData(time(),node,obj,bestbound))
+  end
+  addinfocallback(miop, infocallback, when = :Intermediate)
 
   status = solve(miop)
   Δt = getsolvetime(miop)
