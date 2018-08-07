@@ -76,12 +76,13 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
     node      = MathProgBase.cbgetexplorednodes(cb)
     obj       = bestObj
     bestbound = MathProgBase.cbgetbestbound(cb)
-    push!(bbdata, [time(),node,obj,bestbound])
+    push!(bbdata, [time()-t0,node,obj,bestbound])
 
     @lazyconstraint(cb, t>=c + dot(∇c, s-getvalue(s)))
   end
   addlazycallback(miop, outer_approximation)
 
+  t0 = time()
   status = solve(miop)
   Δt = getsolvetime(miop)
 
