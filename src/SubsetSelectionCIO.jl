@@ -87,7 +87,7 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
       bestbound = MathProgBase.cbgetbestbound(cb)
       push!(bbdata, NodeData(time(),node,obj,bestbound))
   end
-  addinfocallback(miop, infocallback, when = :MIPNode)
+  addinfocallback(miop, infocallback, when = :MIPSol)
 
   status = solve(miop)
   Δt = getsolvetime(miop)
