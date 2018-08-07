@@ -1,6 +1,6 @@
 module SubsetSelectionCIO
 
-using MathProgBase, JuMP, Gurobi, Compat
+using MathProgBase, JuMP, Gurobi, CPLEX, Compat
 using DataFrames, CSV
 
 import Compat.String
@@ -47,7 +47,8 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
 
   miop = Model(solver=GurobiSolver(MIPGap=Gap, TimeLimit=ΔT_max,
                 OutputFlag=1*verbose, LazyConstraints=1, Threads=getthreads()))
-
+  # miop = Model(solver=CplexSolver(CPX_PARAM_EPGAP=Gap, CPX_PARAM_TILIM=ΔT_max,
+  #               CPX_PARAM_SCRIND=1*verbose, LazyConstraints=1, Threads=getthreads()))
   s0 = zeros(p); s0[indices0]=1
   c0, ∇c0 = inner_op(ℓ, Y, X, s0, γ)
 
