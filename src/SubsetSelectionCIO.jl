@@ -1,6 +1,7 @@
 module SubsetSelectionCIO
 
-using MathProgBase, JuMP, Gurobi, Compat, CSV
+using MathProgBase, JuMP, Gurobi, Compat
+using DataFrames, CSV
 
 import Compat.String
 
@@ -10,12 +11,6 @@ export oa_formulation
 
 getthreads() = haskey(ENV, "SLURM_JOB_CPUS_PER_NODE") ? parse(Int, ENV["SLURM_JOB_CPUS_PER_NODE"]) : 0
 
-type NodeData
-    time::Float64  # in seconds since the epoch
-    node::Int
-    obj::Float64
-    bestbound::Float64
-end
 ###########################
 # FUNCTION oa_formulation
 ###########################
@@ -69,7 +64,7 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
   cutCount=1; bestObj=c0; bestSolution=s0[:];
   @constraint(miop, t>= c0 + dot(∇c0, s-s0))
 
-  bbdata = NodeData[]
+  bbdata = DataFrame(time=Float64[], node=Int[], obj=Float64[], bestbound=Float64[])
 
   # Outer approximation method for Convex Integer Optimization (CIO)
   function outer_approximation(cb)
@@ -81,7 +76,7 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
     node      = MathProgBase.cbgetexplorednodes(cb)
     obj       = bestObj
     bestbound = MathProgBase.cbgetbestbound(cb)
-    push!(bbdata, NodeData(time(),node,obj,bestbound))
+    push!(bbdata, [time(),node,obj,bestbound])
 
     @lazyconstraint(cb, t>=c + dot(∇c, s-getvalue(s)))
   end
