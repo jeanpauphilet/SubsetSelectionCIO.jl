@@ -73,17 +73,16 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
 
   # Outer approximation method for Convex Integer Optimization (CIO)
   function outer_approximation(cb)
-
-    node      = MathProgBase.cbgetexplorednodes(cb)
-    obj       = MathProgBase.cbgetobj(cb)
-    bestbound = MathProgBase.cbgetbestbound(cb)
-    push!(bbdata, NodeData(time(),node,obj,bestbound))
-
     cutCount += 1
     c, ∇c = inner_op(ℓ, Y, X, getvalue(s), γ)
     if c<bestObj
       bestObj = c; bestSolution=getvalue(s)[:]
     end
+    node      = MathProgBase.cbgetexplorednodes(cb)
+    obj       = bestObj
+    bestbound = MathProgBase.cbgetbestbound(cb)
+    push!(bbdata, NodeData(time(),node,obj,bestbound))
+
     @lazyconstraint(cb, t>=c + dot(∇c, s-getvalue(s)))
   end
   addlazycallback(miop, outer_approximation)
