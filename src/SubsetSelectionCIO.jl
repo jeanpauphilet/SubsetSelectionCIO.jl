@@ -73,6 +73,7 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
     if c<bestObj
       bestObj = c; bestSolution=getvalue(s)[:]
     end
+
     node      = MathProgBase.cbgetexplorednodes(cb)
     obj       = bestObj
     bestbound = MathProgBase.cbgetbestbound(cb)
@@ -98,8 +99,8 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
   indices = find(s->s>0.5, bestSolution)
   w = SubsetSelection.recover_primal(ℓ, Y, X[:, indices], γ)
 
-  println(bbdata)
-  CSV.write("test_GurobiPath.csv", bbdata)
+  # println(bbdata)
+  # CSV.write("test_GurobiPath.csv", bbdata)
 
   return indices, w, Δt, status, Gap, cutCount
 end
