@@ -1,6 +1,6 @@
 module SubsetSelectionCIO
 
-using MathProgBase, JuMP, Gurobi, Compat
+using MathProgBase, JuMP, Gurobi, Compat, CSV
 
 import Compat.String
 
@@ -87,7 +87,7 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
       bestbound = MathProgBase.cbgetbestbound(cb)
       push!(bbdata, NodeData(time(),node,obj,bestbound))
   end
-  addinfocallback(miop, infocallback, when = :Intermediate)
+  addinfocallback(miop, infocallback, when = :MIPNode)
 
   status = solve(miop)
   Δt = getsolvetime(miop)
@@ -103,6 +103,9 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
   # regularization
   indices = find(s->s>0.5, bestSolution)
   w = SubsetSelection.recover_primal(ℓ, Y, X[:, indices], γ)
+
+  println(bbdata)
+  CSV.write("test_GurobiPath.csv", bbdata)
 
   return indices, w, Δt, status, Gap, cutCount
 end
