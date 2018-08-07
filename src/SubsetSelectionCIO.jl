@@ -69,8 +69,16 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
   cutCount=1; bestObj=c0; bestSolution=s0[:];
   @constraint(miop, t>= c0 + dot(∇c0, s-s0))
 
+  bbdata = NodeData[]
+
   # Outer approximation method for Convex Integer Optimization (CIO)
   function outer_approximation(cb)
+
+    node      = MathProgBase.cbgetexplorednodes(cb)
+    obj       = MathProgBase.cbgetobj(cb)
+    bestbound = MathProgBase.cbgetbestbound(cb)
+    push!(bbdata, NodeData(time(),node,obj,bestbound))
+
     cutCount += 1
     c, ∇c = inner_op(ℓ, Y, X, getvalue(s), γ)
     if c<bestObj
@@ -79,15 +87,6 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
     @lazyconstraint(cb, t>=c + dot(∇c, s-getvalue(s)))
   end
   addlazycallback(miop, outer_approximation)
-
-  bbdata = NodeData[]
-  function infocallback(cb)
-      node      = MathProgBase.cbgetexplorednodes(cb)
-      obj       = MathProgBase.cbgetobj(cb)
-      bestbound = MathProgBase.cbgetbestbound(cb)
-      push!(bbdata, NodeData(time(),node,obj,bestbound))
-  end
-  addinfocallback(miop, infocallback, when = :MIPSol)
 
   status = solve(miop)
   Δt = getsolvetime(miop)
