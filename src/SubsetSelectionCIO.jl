@@ -84,6 +84,7 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
   end
   addlazycallback(miop, outer_approximation)
 
+  t0=time()
   status = solve(miop)
   Δt = getsolvetime(miop)
 
