@@ -41,12 +41,11 @@ OUTPUT
 function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
           indices0=find(x-> x<k/size(X,2), rand(size(X,2))), ΔT_max=60, verbose=false, Gap=0e-3)
 
-  n = size(Y, 1)
-  p = size(X, 2)
-  #Info array
+  n,p = size(X)
 
   # miop = Model(solver=GurobiSolver(MIPGap=Gap, TimeLimit=ΔT_max,
                 # OutputFlag=1*verbose, LazyConstraints=1, Threads=getthreads()))
+  #As of 2018-08, Gurobi does not handle warmstarts properly in Julia. CPLEX recommended
   miop = Model(solver=CplexSolver(CPX_PARAM_EPGAP=Gap, CPX_PARAM_TILIM=ΔT_max,
                 CPX_PARAM_SCRIND=1*verbose))
   s0 = zeros(p); s0[indices0]=1
@@ -65,6 +64,7 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
   cutCount=1; bestObj=c0; bestSolution=s0[:];
   @constraint(miop, t>= c0 + dot(∇c0, s-s0))
 
+  #Info array
   bbdata = DataFrame(time=Float64[], node=Int[], obj=Float64[], bestbound=Float64[])
 
   # Outer approximation method for Convex Integer Optimization (CIO)
@@ -84,24 +84,18 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
   end
   addlazycallback(miop, outer_approximation)
 
-  t0 = time()
   status = solve(miop)
   Δt = getsolvetime(miop)
 
   if status != :Optimal
     Gap = 1 - JuMP.getobjbound(miop) /  getobjectivevalue(miop)
   end
-
   if status == :Optimal
     bestSolution = getvalue(s)[:]
   end
-  # Find selected regressors and run a standard linear regression with Tikhonov
-  # regularization
+  # Find selected regressors and run a standard linear regression with Tikhonov regularization
   indices = find(s->s>0.5, bestSolution)
   w = SubsetSelection.recover_primal(ℓ, Y, X[:, indices], γ)
-
-  # println(bbdata)
-  # CSV.write("test_GurobiPath.csv", bbdata)
 
   return indices, w, Δt, status, Gap, cutCount
 end
