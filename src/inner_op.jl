@@ -102,7 +102,7 @@ function inner_op(ℓ::LossFunction, Y, X, s, γ)
   # Compute optimal dual parameter
   α = sparse_inverse(ℓ, Y, X[:, indices], γ)
 
-  c = SubsetSelection.dual(ℓ, Y, X, α, indices, k, γ)
+  c = SubsetSelection.value_dual(ℓ, Y, X, α, indices, k, γ)
 
   ∇c = zeros(p)
   for j in 1:p
@@ -133,7 +133,7 @@ function sparse_inverse(ℓ::Classification, Y, X, γ;
     cache = SubsetSelection.Cache(n, k)
 
     α = start_primal(ℓ, Y, X, γ)
-    value = SubsetSelection.dual(ℓ, Y, X, α, indices, k, γ)
+    value = SubsetSelection.value_dual(ℓ, Y, X, α, indices, k, γ)
     for iter in 1:maxIter
         ∇ = SubsetSelection.grad_dual(ℓ, Y, X, α, indices, n_indices, γ, cache) #Compute gradient
 
@@ -155,7 +155,7 @@ function sparse_inverse(ℓ::Classification, Y, X, γ;
           learningRate /= 2
           α1 = α .+ learningRate*∇       #Compute new alpha
           α1 = SubsetSelection.proj_dual(ℓ, Y, α1)    #Project
-          newValue = SubsetSelection.dual(ℓ, Y, X, α1, indices, k, γ)  #Compute new f(alpha, s)
+          newValue = SubsetSelection.value_dual(ℓ, Y, X, α1, indices, k, γ)  #Compute new f(alpha, s)
         end
 
         value_gap = 2*(newValue-value)/(value+newValue)
