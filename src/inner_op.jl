@@ -140,12 +140,13 @@ function sparse_inverse(ℓ::Classification, Y, X, γ;
         if norm(∇, 1) <= 1e-14
           break
         end
+        if norm(∇, 1) == Inf
+            α[find(∇ .== Inf)] = -Y[find(∇ .== Inf)]*1e-14
+            α[find(∇ .== -Inf)] = -Y[find(∇ .== -Inf)]*(1-1e-14)
 
-        α[find(∇ .== Inf)] = -Y[find(∇ .== Inf)]*1e-14
-        α[find(∇ .== -Inf)] = -Y[find(∇ .== -Inf)]*(1-1e-14)
-
-        ∇[find(∇ .== Inf)] = 0.
-        ∇[find(∇ .== -Inf)] = 0.
+            ∇[find(∇ .== Inf)] = 0.
+            ∇[find(∇ .== -Inf)] = 0.
+        end
 
         learningRate = 2/norm(∇, 1)
         α1 = α
@@ -154,7 +155,7 @@ function sparse_inverse(ℓ::Classification, Y, X, γ;
         while newValue < value  #Divide step sie by two as long as f decreases
           learningRate /= 2
           α1 = α .+ learningRate*∇       #Compute new alpha
-          α1 = SubsetSelection.proj_dual(ℓ, Y, α1)    #Project
+          SubsetSelection.proj_dual!(ℓ, Y, α1)    #Project
           newValue = SubsetSelection.value_dual(ℓ, Y, X, α1, indices, k, γ)  #Compute new f(alpha, s)
         end
 
