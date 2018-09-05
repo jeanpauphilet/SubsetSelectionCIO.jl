@@ -39,15 +39,14 @@ OUTPUT
   cutCount    - Number of cuts needed in the cutting-plane algorithm
   """
 function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
-          indices0=find(x-> x<k/size(X,2), rand(size(X,2))), ΔT_max=60, verbose=false, Gap=0e-3)
+          indices0=find(x-> x<k/size(X,2), rand(size(X,2))), ΔT_max=60, verbose=false, Gap=0e-3, solver::Symbol=:Gurobi)
 
   n,p = size(X)
 
-  # miop = Model(solver=GurobiSolver(MIPGap=Gap, TimeLimit=ΔT_max,
-                # OutputFlag=1*verbose, LazyConstraints=1, Threads=getthreads()))
-  #As of 2018-08, Gurobi does not handle warmstarts properly in Julia. CPLEX recommended
-  miop = Model(solver=CplexSolver(CPX_PARAM_EPGAP=Gap, CPX_PARAM_TILIM=ΔT_max,
-                CPX_PARAM_SCRIND=1*verbose))
+  miop = (solver == :Gurobi) ?    Model(solver=GurobiSolver(MIPGap=Gap, TimeLimit=ΔT_max,
+                                    OutputFlag=1*verbose, LazyConstraints=1, Threads=getthreads())) :
+                                  Model(solver=CplexSolver(CPX_PARAM_EPGAP=Gap, CPX_PARAM_TILIM=ΔT_max,
+                                    CPX_PARAM_SCRIND=1*verbose))
   s0 = zeros(p); s0[indices0]=1
   c0, ∇c0 = inner_op(ℓ, Y, X, s0, γ)
 

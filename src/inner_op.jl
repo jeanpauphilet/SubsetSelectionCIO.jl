@@ -149,12 +149,12 @@ function sparse_inverse(ℓ::Classification, Y, X, γ;
         end
 
         learningRate = 2/norm(∇, 1)
-        α1 = α
+        α1 = α[:]
         newValue = value - 1.
 
         while newValue < value  #Divide step sie by two as long as f decreases
           learningRate /= 2
-          α1 = α .+ learningRate*∇       #Compute new alpha
+          α1[:] = α .+ learningRate*∇       #Compute new alpha
           SubsetSelection.proj_dual!(ℓ, Y, α1)    #Project
           newValue = SubsetSelection.value_dual(ℓ, Y, X, α1, indices, k, γ)  #Compute new f(alpha, s)
         end
