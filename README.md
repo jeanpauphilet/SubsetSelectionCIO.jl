@@ -50,4 +50,4 @@ and iteratively increase it by a factor 2. Mean square error or Area Under the C
 - The mixed-integer solver greatly benefits from a good warm-start, even though the warm start is not feasible, i.e., `k`-sparse. Among other methods, one can use the output of [SubsetSelection](https://github.com/jeanpauphilet/SubsetSelection.jl) or a Lasso estimator (see [GLMNet](https://github.com/JuliaStats/GLMNet.jl) implementation for instance).
 
 ## Reference
-Dimitris Bertsimas, Jean Pauphilet, Bart Van Parys, <i> Sparse Classification : a scalable discrete optimization perspective <i/>, available on [Arxiv](http://arxiv.org/abs/1710.01352)
+Dimitris Bertsimas, Jean Pauphilet, Bart Van Parys, <i> Sparse Classification : a scalable discrete optimization perspective </i>, available on [Arxiv](http://arxiv.org/abs/1710.01352)
