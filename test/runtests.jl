@@ -1,5 +1,5 @@
 using SubsetSelectionCIO
-using Base.Test
+using Test
 using StatsBase
 
 n = 500; p = 1000; k = 10;

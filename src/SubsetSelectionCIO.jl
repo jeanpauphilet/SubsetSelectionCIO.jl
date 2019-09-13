@@ -1,6 +1,6 @@
 module SubsetSelectionCIO
 
-using MathProgBase, JuMP, Gurobi, CPLEX, Compat
+using MathProgBase, JuMP, Gurobi, CPLEX, Compat, LinearAlgebra
 using DataFrames, CSV
 
 import Compat.String
@@ -39,7 +39,7 @@ OUTPUT
   cutCount    - Number of cuts needed in the cutting-plane algorithm
   """
 function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
-          indices0=find(x-> x<k/size(X,2), rand(size(X,2))), ΔT_max=60, verbose=false, Gap=0e-3, solver::Symbol=:Gurobi)
+          indices0=findall(x-> x<k/size(X,2), rand(size(X,2))), ΔT_max=60, verbose=false, Gap=0e-3, solver::Symbol=:Gurobi)
 
   n,p = size(X)
 
@@ -47,7 +47,8 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
                                     OutputFlag=1*verbose, LazyConstraints=1, Threads=getthreads())) :
                                   Model(solver=CplexSolver(CPX_PARAM_EPGAP=Gap, CPX_PARAM_TILIM=ΔT_max,
                                     CPX_PARAM_SCRIND=1*verbose))
-  s0 = zeros(p); s0[indices0]=1
+  s0 = zeros(p); s0[indices0].=1
+
   c0, ∇c0 = inner_op(ℓ, Y, X, s0, γ)
 
   # Optimization variables
@@ -94,7 +95,7 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
     bestSolution = getvalue(s)[:]
   end
   # Find selected regressors and run a standard linear regression with Tikhonov regularization
-  indices = find(s->s>0.5, bestSolution)
+  indices = findall(s->s>0.5, bestSolution)
   w = SubsetSelection.recover_primal(ℓ, Y, X[:, indices], γ)
 
   return indices, w, Δt, status, Gap, cutCount
