@@ -1,6 +1,7 @@
-julia 0.5 0.7-
+julia 1.0
 Compat 0.17
 Gurobi
 CPLEX
+MathProgBase
 JuMP 0.17
 SubsetSelection 0.0.3
