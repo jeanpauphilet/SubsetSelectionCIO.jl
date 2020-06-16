@@ -86,7 +86,7 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
     Gap = 1 - JuMP.objective_bound(miop) /  JuMP.objective_value(miop)
   end
   if status == :Optimal
-  b estSolution = value(s)[:]
+    bestSolution = value(s)[:]
   end
   # Find selected regressors and run a standard linear regression with Tikhonov regularization
   indices = findall(bestSolution .> .5)
