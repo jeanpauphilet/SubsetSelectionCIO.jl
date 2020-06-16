@@ -39,7 +39,9 @@ OUTPUT
   cutCount    - Number of cuts needed in the cutting-plane algorithm
   """
 function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
-          indices0=findall(rand(size(X,2)) .< k/size(X,2)), ΔT_max=60, verbose=false, Gap=0e-3, solver::Symbol=:Gurobi)
+          indices0=findall(rand(size(X,2)) .< k/size(X,2)),
+          ΔT_max=60, verbose=false, Gap=0e-3, solver::Symbol=:Gurobi,
+          rootnode::Bool=true)
 
   n,p = size(X)
 
@@ -61,9 +63,21 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
   # Constraints
   @constraint(miop, sum(s) <= k)
 
+  #Root node analysis
   cutCount=1; bestObj=c0; bestSolution=s0[:];
   @constraint(miop, t>= c0 + dot(∇c0, s-s0))
 
+  if rootnode
+    s0 = zeros(p)
+    l1 = glmnet(X[train,:], convert(Matrix{Float64}, Y_transf), GLMNet.Binomial(), dfmax=k, intercept=false)
+    for  i in 1:size(l1.betas, 2)
+      ind = findall(abs.(l1.betas[:, i]) .> 1e-8); s0[ind] .= 1.
+      c0, ∇c0 = inner_op(ℓ, Y, X, s0, γ)
+      @constraint(miop, t>= c0 + dot(∇c0, s-s0))
+      cutCount += 1; s0 .= 0.
+    end
+  end
+  
   # Outer approximation method for Convex Integer Optimization (CIO)
   function outer_approximation(cb_data)
     s_val = [callback_value(cb_data, s[j]) for j in 1:p] #vectorized version of callback_value is not currently offered in JuMP

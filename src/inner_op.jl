@@ -95,7 +95,15 @@ OUTPUT
   α           - Dual variables
   c           - function value c(s)
   ∇c          - subgradient of c at s"""
-function inner_op(ℓ::LossFunction, Y, X, s, γ)
+function inner_op(ℓ::LossFunction, Y, X, s, γ; stochastic=false)
+    if stochastic
+        inner_op_stochastic(ℓ, Y, X, s, γ)
+    else
+        inner_op_plain(ℓ, Y, X, s, γ)
+    end
+end
+
+function inner_op_plain(ℓ::LossFunction, Y, X, s, γ)
   indices = findall(s .> .5); k = length(indices)
   n,p = size(X)
 
@@ -111,6 +119,21 @@ function inner_op(ℓ::LossFunction, Y, X, s, γ)
   return c, ∇c
 end
 
+function inner_op_stochastic(ℓ::LossFunction, Y, X, s, γ)
+  indices = findall(s .> .5); k = length(indices)
+  n,p = size(X)
+
+  # Compute optimal dual parameter
+  α = sparse_inverse(ℓ, Y, X[:, indices], γ)
+
+  c = SubsetSelection.value_dual(ℓ, Y, X, α, indices, k, γ)
+
+  ∇c = zeros(p)
+  for j in 1:p
+    ∇c[j] = -γ/2*dot(X[:,j],α)^2
+  end
+  return c, ∇c
+end
 # using LIBLINEAR
 
 # FUNCTION sparse_inverse
