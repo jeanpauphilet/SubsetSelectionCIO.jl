@@ -55,7 +55,7 @@ function sparse_inverse(ℓ::LossFunction, Y, X, γ)
   n = size(X, 1)
   k = size(X, 2)
 
-  CM = eye(k)/γ + X'*X      # The capacitance matrix
+  CM = Matrix{Float64}(I,k,k)/γ + X'*X      # The capacitance matrix
   α = -Y + X*(CM\(X'*Y))       # Matrix Inversion Lemma
 
   return α
@@ -96,7 +96,7 @@ OUTPUT
   c           - function value c(s)
   ∇c          - subgradient of c at s"""
 function inner_op(ℓ::LossFunction, Y, X, s, γ)
-  indices = find(x->x>0.5, s); k = length(indices)
+  indices = findall(s .> .5); k = length(indices)
   n,p = size(X)
 
   # Compute optimal dual parameter
@@ -134,6 +134,7 @@ function sparse_inverse(ℓ::Classification, Y, X, γ;
 
     α = start_primal(ℓ, Y, X, γ)
     value = SubsetSelection.value_dual(ℓ, Y, X, α, indices, k, γ)
+
     for iter in 1:maxIter
         ∇ = SubsetSelection.grad_dual(ℓ, Y, X, α, indices, n_indices, γ, cache) #Compute gradient
 
@@ -141,11 +142,11 @@ function sparse_inverse(ℓ::Classification, Y, X, γ;
           break
         end
         if norm(∇, 1) == Inf
-            α[find(∇ .== Inf)] = -Y[find(∇ .== Inf)]*1e-14
-            α[find(∇ .== -Inf)] = -Y[find(∇ .== -Inf)]*(1-1e-14)
+            α[findall(∇ .== Inf)] .= -Y[findall(∇ .== Inf)]*1e-14
+            α[findall(∇ .== -Inf)] .= -Y[findall(∇ .== -Inf)]*(1-1e-14)
 
-            ∇[find(∇ .== Inf)] = 0.
-            ∇[find(∇ .== -Inf)] = 0.
+            ∇[findall(∇ .== Inf)] .= 0.
+            ∇[findall(∇ .== -Inf)] .= 0.
         end
 
         learningRate = 2/norm(∇, 1)
@@ -172,7 +173,6 @@ end
 # FUNCTION start_primal
 function start_primal(ℓ::Classification, Y::Array, X::Array, γ::Real)
   n,k = size(X)
-
   w = SubsetSelection.recover_primal(ℓ, Y, X, γ)
   α = primal2dual(ℓ, Y, X, w)
   return α

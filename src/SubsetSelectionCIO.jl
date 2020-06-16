@@ -1,6 +1,6 @@
 module SubsetSelectionCIO
 
-using MathProgBase, JuMP, Gurobi, CPLEX, Compat
+using SubsetSelection, JuMP, Gurobi, MathOptInterface, LinearAlgebra
 using DataFrames, CSV
 
 import Compat.String
@@ -39,15 +39,16 @@ OUTPUT
   cutCount    - Number of cuts needed in the cutting-plane algorithm
   """
 function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
-          indices0=find(x-> x<k/size(X,2), rand(size(X,2))), ΔT_max=60, verbose=false, Gap=0e-3, solver::Symbol=:Gurobi)
+          indices0=findall(rand(size(X,2)) .< k/size(X,2)), ΔT_max=60, verbose=false, Gap=0e-3, solver::Symbol=:Gurobi)
 
   n,p = size(X)
 
-  miop = (solver == :Gurobi) ?    Model(solver=GurobiSolver(MIPGap=Gap, TimeLimit=ΔT_max,
-                                    OutputFlag=1*verbose, LazyConstraints=1, Threads=getthreads())) :
-                                  Model(solver=CplexSolver(CPX_PARAM_EPGAP=Gap, CPX_PARAM_TILIM=ΔT_max,
-                                    CPX_PARAM_SCRIND=1*verbose))
-  s0 = zeros(p); s0[indices0]=1
+  miop = (solver == :Gurobi) ? Model(Gurobi.Optimizer) : Model(Cplex.Optimizer)
+  set_optimizer_attribute(miop, (solver == :Gurobi) ? "TimeLimit" : "CPX_PARAM_TILIM", ΔT_max)
+  set_optimizer_attribute(miop, (solver == :Gurobi) ? "OutputFlag" : "CPX_PARAM_SCRIND", 1*verbose)
+  set_optimizer_attribute(miop, (solver == :Gurobi) ? "MIPGap" : "CPX_PARAM_EPGAP", Gap)
+
+  s0 = zeros(p); s0[indices0] .= 1.
   c0, ∇c0 = inner_op(ℓ, Y, X, s0, γ)
 
   # Optimization variables
@@ -58,43 +59,37 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
   @objective(miop, Min, t)
 
   # Constraints
-  @constraint(miop, sum(s)<=k)
+  @constraint(miop, sum(s) <= k)
 
   cutCount=1; bestObj=c0; bestSolution=s0[:];
   @constraint(miop, t>= c0 + dot(∇c0, s-s0))
 
-  #Info array
-  bbdata = DataFrame(time=Float64[], node=Int[], obj=Float64[], bestbound=Float64[])
-
   # Outer approximation method for Convex Integer Optimization (CIO)
-  function outer_approximation(cb)
-    cutCount += 1
-    c, ∇c = inner_op(ℓ, Y, X, getvalue(s), γ)
+  function outer_approximation(cb_data)
+    s_val = [callback_value(cb_data, s[j]) for j in 1:p] #vectorized version of callback_value is not currently offered in JuMP
+    c, ∇c = inner_op(ℓ, Y, X, s_val, γ)
     if c<bestObj
-      bestObj = c; bestSolution=getvalue(s)[:]
+      bestObj = c; bestSolution=s_val[:]
     end
 
-    node      = MathProgBase.cbgetexplorednodes(cb)
-    obj       = bestObj
-    bestbound = MathProgBase.cbgetbestbound(cb)
-    push!(bbdata, [time()-t0,node,obj,bestbound])
-
-    @lazyconstraint(cb, t>=c + dot(∇c, s-getvalue(s)))
+    con = @build_constraint(t >= c + dot(∇c, s-s_val))
+    MOI.submit(miop, MOI.LazyConstraint(cb_data), con)
+    cutCount += 1
   end
-  addlazycallback(miop, outer_approximation)
+  MOI.set(miop, MOI.LazyConstraintCallback(), outer_approximation)
 
-  t0=time()
-  status = solve(miop)
-  Δt = getsolvetime(miop)
+  t0 = time()
+  status = optimize!(miop)
+  Δt = JuMP.solve_time(miop)
 
   if status != :Optimal
-    Gap = 1 - JuMP.getobjbound(miop) /  getobjectivevalue(miop)
+    Gap = 1 - JuMP.objective_bound(miop) /  JuMP.objective_value(miop)
   end
   if status == :Optimal
-    bestSolution = getvalue(s)[:]
+  b estSolution = value(s)[:]
   end
   # Find selected regressors and run a standard linear regression with Tikhonov regularization
-  indices = find(s->s>0.5, bestSolution)
+  indices = findall(bestSolution .> .5)
   w = SubsetSelection.recover_primal(ℓ, Y, X[:, indices], γ)
 
   return indices, w, Δt, status, Gap, cutCount
