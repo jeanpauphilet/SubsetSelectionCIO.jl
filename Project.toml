@@ -1,3 +1,8 @@
+name = "SubsetSelectionCIO"
+uuid = "c8bff8e5-9b85-40c2-8dcd-f6ca054b8723"
+authors = ["jeanpauphilet <jean.pauphilet@gmail.com>"]
+version = "0.1.0"
+
 [deps]
 CPLEX = "a076750e-1247-5638-91d2-ce28b192dca0"
 Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
