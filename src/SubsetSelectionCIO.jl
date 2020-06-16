@@ -70,7 +70,7 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
   if rootnode
     s0 = zeros(p)
     l1 = glmnet(X, convert(Matrix{Float64}, [(Y.<0) (Y.>0)]), GLMNet.Binomial(), dfmax=k, intercept=false)
-    for  i in 1:size(l1.betas, 2)
+    for  i in size(l1.betas, 2):-1:max(size(l1.betas, 2)-20,0) #Add first 10 cuts from Lasso path
       ind = findall(abs.(l1.betas[:, i]) .> 1e-8); s0[ind] .= 1.
       c0, ∇c0 = inner_op(ℓ, Y, X, s0, γ)
       @constraint(miop, t>= c0 + dot(∇c0, s-s0))
