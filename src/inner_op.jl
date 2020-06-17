@@ -124,14 +124,14 @@ function inner_op_stochastic(ℓ::LossFunction, Y, X, s, γ;
   n,p = size(X)
 
   # Compute optimal dual parameter
-  w = zeros(k)
-  for b in 1:B
-    subset = rand(n) .< bSize
-    w .+= SubsetSelection.recover_primal(ℓ, Y[subset], X[subset,indices], γ)
-  end
-  w ./= B
-  α = primal2dual(ℓ, Y, X[:,indices], w)
-
+  # w = zeros(k)
+  # for b in 1:B
+  #   subset = rand(n) .< bSize
+  #   w .+= SubsetSelection.recover_primal(ℓ, Y[subset], X[subset,indices], γ)
+  # end
+  # w ./= B
+  # α = primal2dual(ℓ, Y, X[:,indices], w)
+  α = start_primal(ℓ, Y, X[:,indices], γ)
   c = SubsetSelection.value_dual(ℓ, Y, X, α, indices, k, γ)
 
   ∇c = zeros(p)
