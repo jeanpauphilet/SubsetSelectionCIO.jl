@@ -1,7 +1,6 @@
 module SubsetSelectionCIO
 
-using SubsetSelection, JuMP, Gurobi, MathOptInterface, LinearAlgebra, GLMNet
-using DataFrames, CSV
+using SubsetSelection, JuMP, Gurobi, CPLEX, MathOptInterface, LinearAlgebra, GLMNet
 
 import Compat.String
 
@@ -57,6 +56,11 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
   @variable(miop, s[j=1:p], Bin, start=s0[j])
   @variable(miop, t>=0, start=c0)
 
+  # for j in 1:p
+  #   JuMP.set_start_value(s[j], s0[j])
+  # end
+  # JuMP.set_start_value(t, c0)
+
   # Objective
   @objective(miop, Min, t)
 
@@ -68,13 +72,13 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
   @constraint(miop, t>= c0 + dot(∇c0, s-s0))
 
   if rootnode
-    s0 = zeros(p)
+    s1 = zeros(p)
     l1 = glmnet(X, convert(Matrix{Float64}, [(Y.<0) (Y.>0)]), GLMNet.Binomial(), dfmax=k, intercept=false)
     for  i in size(l1.betas, 2):-1:max(size(l1.betas, 2)-20,0) #Add first 10 cuts from Lasso path
-      ind = findall(abs.(l1.betas[:, i]) .> 1e-8); s0[ind] .= 1.
-      c0, ∇c0 = inner_op(ℓ, Y, X, s0, γ)
-      @constraint(miop, t>= c0 + dot(∇c0, s-s0))
-      cutCount += 1; s0 .= 0.
+      ind = findall(abs.(l1.betas[:, i]) .> 1e-8); s1[ind] .= 1.
+      c1, ∇c1 = inner_op(ℓ, Y, X, s1, γ)
+      @constraint(miop, t>= c1 + dot(∇c1, s-s1))
+      cutCount += 1; s1 .= 0.
     end
   end
 
@@ -91,6 +95,19 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
     cutCount += 1
   end
   MOI.set(miop, MOI.LazyConstraintCallback(), outer_approximation)
+
+  # Feed warmstart
+  if (solver == :Gurobi)
+    wsCount = 0
+    function warm_start(cb_data)
+      if wsCount == 0
+        MOI.submit(miop, MOI.HeuristicSolution(cb_data), [s[j] for j in 1:p], floor.(Int, s0))
+        MOI.submit(miop, MOI.HeuristicSolution(cb_data), [t], [c0])
+        wsCount += 1
+      end
+    end
+    MOI.set(miop, MOI.HeuristicCallback(), warm_start)
+  end
 
   t0 = time()
   status = optimize!(miop)
