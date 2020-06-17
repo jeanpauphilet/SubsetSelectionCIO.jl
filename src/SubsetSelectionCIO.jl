@@ -44,22 +44,23 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
 
   n,p = size(X)
 
-  miop = (solver == :Gurobi) ? Model(Gurobi.Optimizer) : Model(Cplex.Optimizer)
+  miop = (solver == :Gurobi) ? Model(Gurobi.Optimizer) : Model(CPLEX.Optimizer)
   set_optimizer_attribute(miop, (solver == :Gurobi) ? "TimeLimit" : "CPX_PARAM_TILIM", ΔT_max)
   set_optimizer_attribute(miop, (solver == :Gurobi) ? "OutputFlag" : "CPX_PARAM_SCRIND", 1*verbose)
   set_optimizer_attribute(miop, (solver == :Gurobi) ? "MIPGap" : "CPX_PARAM_EPGAP", Gap)
+  set_optimizer_attribute(miop, (solver == :Gurobi) ? "Threads" : "CPXPARAM_Threads", getthreads())
 
   s0 = zeros(p); s0[indices0] .= 1.
   c0, ∇c0 = inner_op(ℓ, Y, X, s0, γ)
 
   # Optimization variables
   @variable(miop, s[j=1:p], Bin, start=s0[j])
-  @variable(miop, t>=0, start=c0)
+  @variable(miop, t>=0, start=1.005*c0)
 
-  # for j in 1:p
-  #   JuMP.set_start_value(s[j], s0[j])
-  # end
-  # JuMP.set_start_value(t, c0)
+  for j in 1:p
+    JuMP.set_start_value(s[j], s0[j])
+  end
+  JuMP.set_start_value(t, 1.005*c0)
 
   # Objective
   @objective(miop, Min, t)
@@ -96,18 +97,18 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
   end
   MOI.set(miop, MOI.LazyConstraintCallback(), outer_approximation)
 
-  # Feed warmstart
-  if (solver == :Gurobi)
-    wsCount = 0
-    function warm_start(cb_data)
-      if wsCount == 0
-        MOI.submit(miop, MOI.HeuristicSolution(cb_data), [s[j] for j in 1:p], floor.(Int, s0))
-        MOI.submit(miop, MOI.HeuristicSolution(cb_data), [t], [c0])
-        wsCount += 1
-      end
-    end
-    MOI.set(miop, MOI.HeuristicCallback(), warm_start)
-  end
+  # # Feed warmstart
+  # if (solver == :Gurobi)
+  #   wsCount = 0
+  #   function warm_start(cb_data)
+  #     if wsCount == 0
+  #       MOI.submit(miop, MOI.HeuristicSolution(cb_data), [s[j] for j in 1:p], floor.(Int, s0))
+  #       MOI.submit(miop, MOI.HeuristicSolution(cb_data), [t], [c0])
+  #       wsCount += 1
+  #     end
+  #   end
+  #   MOI.set(miop, MOI.HeuristicCallback(), warm_start)
+  # end
 
   t0 = time()
   status = optimize!(miop)
