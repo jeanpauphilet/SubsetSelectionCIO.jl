@@ -87,6 +87,9 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
   function outer_approximation(cb_data)
     s_val = [callback_value(cb_data, s[j]) for j in 1:p] #vectorized version of callback_value is not currently offered in JuMP
     c, ∇c = inner_op(ℓ, Y, X, s_val, γ, stochastic=stochastic)
+    if stochastic && callback_value(cb_data, t) > c #If stochastic version and did not cut the solution
+        c, ∇c = inner_op(ℓ, Y, X, s_val, γ, stochastic=false)
+    end
     if c<bestObj
       bestObj = c; bestSolution=s_val[:]
     end

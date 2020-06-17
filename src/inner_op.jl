@@ -124,32 +124,31 @@ function inner_op_stochastic(ℓ::LossFunction, Y, X, s, γ;
   n,p = size(X)
 
   # Compute optimal dual parameter
-  # w = zeros(k)
-  # for b in 1:B
-  #   subset = rand(n) .< bSize
-  #   w .+= SubsetSelection.recover_primal(ℓ, Y[subset], X[subset,indices], γ)
-  # end
-  # w ./= B
-  # α = start_primal(ℓ, Y, X[:,indices], γ)
-  # c = SubsetSelection.value_dual(ℓ, Y, X, α, indices, k, γ)
-  #
-  # ∇c = zeros(p)
-  # for j in 1:p
-  #   ∇c[j] = -γ/2*dot(X[:,j],α)^2
-  # end
-  # return c, ∇c
+  w = zeros(k)
+  for b in 1:B
+    subset = rand(n) .< bSize
+    w .+= SubsetSelection.recover_primal(ℓ, Y[subset], X[subset,indices], γ)
+  end
+  w ./= B
+  α = start_primal(ℓ, Y, X[:,indices], γ)
+  c = SubsetSelection.value_dual(ℓ, Y, X, α, indices, k, γ)
+
+  ∇c = zeros(p)
+  for j in 1:p
+    ∇c[j] = -γ/2*dot(X[:,j],α)^2
+  end
+  return c, ∇c
 
   # Compute optimal dual parameter
   # w = zeros(k)
-  c_s = 0; ∇c_s = zeros(p)
-  for b in 1:B
-    subset = rand(n) .< bSize
-    c, ∇c = inner_op_plain(ℓ, Y[subset], X[subset,:], s, γ)
-    c_s += c; ∇c_s += ∇c
-  end
-  c_s /= B; ∇c_s ./= B
-  return c_s, ∇c_s
-
+  # c_s = 0; ∇c_s = zeros(p)
+  # for b in 1:B
+  #   subset = rand(n) .< bSize
+  #   c, ∇c = inner_op_plain(ℓ, Y[subset], X[subset,:], s, γ)
+  #   c_s += c; ∇c_s += ∇c
+  # end
+  # c_s /= B; ∇c_s ./= B
+  # return c_s, ∇c_s
 end
 # using LIBLINEAR
 
