@@ -109,7 +109,6 @@ function inner_op_plain(ℓ::LossFunction, Y, X, s, γ)
 
   # Compute optimal dual parameter
   α = sparse_inverse(ℓ, Y, X[:, indices], γ)
-
   c = SubsetSelection.value_dual(ℓ, Y, X, α, indices, k, γ)
 
   ∇c = zeros(p)
@@ -119,12 +118,19 @@ function inner_op_plain(ℓ::LossFunction, Y, X, s, γ)
   return c, ∇c
 end
 
-function inner_op_stochastic(ℓ::LossFunction, Y, X, s, γ)
+function inner_op_stochastic(ℓ::LossFunction, Y, X, s, γ;
+      B=10, bSize=max(0.1,2*sum(s)/size(X,1)) )
   indices = findall(s .> .5); k = length(indices)
   n,p = size(X)
 
   # Compute optimal dual parameter
-  α = sparse_inverse(ℓ, Y, X[:, indices], γ)
+  w = zeros(k)
+  for b in 1:B
+    subset = rand(n) .< bSize
+    w .+= SubsetSelection.recover_primal(ℓ, Y[subset], X[subset,indices], γ)
+  end
+  w ./= B
+  α = primal2dual(ℓ, Y, X[:,indices], w)
 
   c = SubsetSelection.value_dual(ℓ, Y, X, α, indices, k, γ)
 

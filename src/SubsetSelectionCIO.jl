@@ -40,7 +40,7 @@ OUTPUT
 function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
           indices0=findall(rand(size(X,2)) .< k/size(X,2)),
           ΔT_max=60, verbose=false, Gap=0e-3, solver::Symbol=:Gurobi,
-          rootnode::Bool=true)
+          rootnode::Bool=true, stochastic::Bool=false)
 
   n,p = size(X)
 
@@ -51,7 +51,7 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
   set_optimizer_attribute(miop, (solver == :Gurobi) ? "Threads" : "CPXPARAM_Threads", getthreads())
 
   s0 = zeros(p); s0[indices0] .= 1.
-  c0, ∇c0 = inner_op(ℓ, Y, X, s0, γ)
+  c0, ∇c0 = inner_op(ℓ, Y, X, s0, γ, stochastic=stochastic)
 
   # Optimization variables
   @variable(miop, s[j=1:p], Bin, start=s0[j])
@@ -77,7 +77,7 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
     l1 = glmnet(X, convert(Matrix{Float64}, [(Y.<0) (Y.>0)]), GLMNet.Binomial(), dfmax=k, intercept=false)
     for  i in size(l1.betas, 2):-1:max(size(l1.betas, 2)-20,1) #Add first 10 cuts from Lasso path
       ind = findall(abs.(l1.betas[:, i]) .> 1e-8); s1[ind] .= 1.
-      c1, ∇c1 = inner_op(ℓ, Y, X, s1, γ)
+      c1, ∇c1 = inner_op(ℓ, Y, X, s1, γ, stochastic=stochastic)
       @constraint(miop, t>= c1 + dot(∇c1, s-s1))
       cutCount += 1; s1 .= 0.
     end
@@ -86,7 +86,7 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
   # Outer approximation method for Convex Integer Optimization (CIO)
   function outer_approximation(cb_data)
     s_val = [callback_value(cb_data, s[j]) for j in 1:p] #vectorized version of callback_value is not currently offered in JuMP
-    c, ∇c = inner_op(ℓ, Y, X, s_val, γ)
+    c, ∇c = inner_op(ℓ, Y, X, s_val, γ, stochastic=stochastic)
     if c<bestObj
       bestObj = c; bestSolution=s_val[:]
     end
