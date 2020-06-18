@@ -74,8 +74,8 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
 
   if rootnode
     s1 = zeros(p)
-    l1 = glmnet(X, convert(Matrix{Float64}, [(Y.<0) (Y.>0)]), GLMNet.Binomial(), dfmax=k, intercept=false)
-    for  i in size(l1.betas, 2):-1:max(size(l1.betas, 2)-20,1) #Add first 10 cuts from Lasso path
+    l1 = isa(ℓ, SubsetSelection.Classification) ? glmnet(X, convert(Matrix{Float64}, [(Y.<0) (Y.>0)]), GLMNet.Binomial(), dfmax=k, intercept=false) : glmnet(X, Y, dfmax=k, intercept=false)
+    for  i in size(l1.betas, 2):-1:max(size(l1.betas, 2)-20,1) #Add first 20 cuts from Lasso path
       ind = findall(abs.(l1.betas[:, i]) .> 1e-8); s1[ind] .= 1.
       c1, ∇c1 = inner_op(ℓ, Y, X, s1, γ, stochastic=stochastic)
       @constraint(miop, t>= c1 + dot(∇c1, s-s1))
