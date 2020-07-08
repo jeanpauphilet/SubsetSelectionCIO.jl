@@ -210,6 +210,12 @@ function sparse_inverse(ℓ::Classification, Y, X, γ;
 end
 
 # FUNCTION start_primal
+function start_primal(ℓ::Regression, Y::Array, X::Array, γ::Real)
+  CM = Matrix(I, size(X,2), size(X,2))/γ + X'*X     # The capacitance matrix
+  α = -Y + X*(CM\(X'*Y))            # Matrix Inversion Lemma
+  return α
+end
+
 function start_primal(ℓ::Classification, Y::Array, X::Array, γ::Real)
   n,k = size(X)
   w = SubsetSelection.recover_primal(ℓ, Y, X, γ)
