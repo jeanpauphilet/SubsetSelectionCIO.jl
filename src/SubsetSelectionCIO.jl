@@ -90,7 +90,7 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
     if stochastic && callback_value(cb_data, t) > c #If stochastic version and did not cut the solution
         c, ∇c = inner_op(ℓ, Y, X, s_val, γ, stochastic=false)
     end
-    if c<bestObj
+    if c<bestObj #if feasible and best value
       bestObj = c; bestSolution=s_val[:]
     end
 
@@ -114,15 +114,18 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
   # end
 
   t0 = time()
-  status = optimize!(miop)
+  optimize!(miop)
+  status = termination_status(miop)
   Δt = JuMP.solve_time(miop)
 
-  if status != :Optimal
-    Gap = 1 - JuMP.objective_bound(miop) /  JuMP.objective_value(miop)
+  # if status != OPTIMAL
+  Gap = 1 - JuMP.objective_bound(miop) /  abs(JuMP.objective_value(miop))
+  # end
+  # if status == OPTIMAL
+  if JuMP.objective_bound(miop) < bestObj
+    bestSolution = value.(s)[:]
   end
-  if status == :Optimal
-    bestSolution = value(s)[:]
-  end
+  # end
   # Find selected regressors and run a standard linear regression with Tikhonov regularization
   indices = findall(bestSolution .> .5)
   w = SubsetSelection.recover_primal(ℓ, Y, X[:, indices], γ)
