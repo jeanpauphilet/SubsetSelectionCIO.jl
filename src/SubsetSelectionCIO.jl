@@ -90,7 +90,7 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
     if stochastic && callback_value(cb_data, t) > c #If stochastic version and did not cut the solution
         c, ∇c = inner_op(ℓ, Y, X, s_val, γ, stochastic=false)
     end
-    if c<bestObj #if feasible and best value
+    if sum(s_val)<=k && c<bestObj #if feasible and best value
       bestObj = c; bestSolution=s_val[:]
     end
 
