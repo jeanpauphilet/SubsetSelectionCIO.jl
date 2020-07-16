@@ -69,7 +69,7 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
   @constraint(miop, sum(s) <= k)
 
   #Root node analysis
-  cutCount=1; bestObj=c0; bestSolution=s0[:];
+  cutCount=1; bestObj=sum(s0)<= k ? c0 : +Inf; bestSolution=sum(s0)<= k ? s0[:] : [] ;
   @constraint(miop, t>= c0 + dot(∇c0, s-s0))
 
   if rootnode
@@ -118,14 +118,11 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
   status = termination_status(miop)
   Δt = JuMP.solve_time(miop)
 
-  # if status != OPTIMAL
   Gap = 1 - JuMP.objective_bound(miop) /  abs(JuMP.objective_value(miop))
-  # end
-  # if status == OPTIMAL
   if JuMP.objective_bound(miop) < bestObj
     bestSolution = value.(s)[:]
   end
-  # end
+
   # Find selected regressors and run a standard linear regression with Tikhonov regularization
   indices = findall(bestSolution .> .5)
   w = SubsetSelection.recover_primal(ℓ, Y, X[:, indices], γ)
