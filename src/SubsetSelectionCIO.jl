@@ -117,8 +117,6 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
   #   MOI.set(miop, MOI.HeuristicCallback(), warm_start)
   # end
 
-  @show bestObj, sum(bestSolution)
-
   t0 = time()
   optimize!(miop)
   status = termination_status(miop)
