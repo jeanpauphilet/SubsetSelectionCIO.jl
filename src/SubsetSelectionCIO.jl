@@ -86,17 +86,21 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
   # Outer approximation method for Convex Integer Optimization (CIO)
   function outer_approximation(cb_data)
     s_val = [callback_value(cb_data, s[j]) for j in 1:p] #vectorized version of callback_value is not currently offered in JuMP
-    c, ∇c = inner_op(ℓ, Y, X, s_val, γ, stochastic=stochastic)
-    if stochastic && callback_value(cb_data, t) > c #If stochastic version and did not cut the solution
-        c, ∇c = inner_op(ℓ, Y, X, s_val, γ, stochastic=false)
-    end
-    if sum(s_val)<=k && c<bestObj #if feasible and best value
-      bestObj = c; bestSolution=s_val[:]
-    end
+    # if maximum(s_val.*(1 .- s_val)) < 10*eps()
+      s_val = 1.0 .* (rand(p) .< s_val) #JuMP updates calls Lazy Callbacks at fractional solutions as well
 
-    con = @build_constraint(t >= c + dot(∇c, s-s_val))
-    MOI.submit(miop, MOI.LazyConstraint(cb_data), con)
-    cutCount += 1
+      c, ∇c = inner_op(ℓ, Y, X, s_val, γ, stochastic=stochastic)
+      if stochastic && callback_value(cb_data, t) > c #If stochastic version and did not cut the solution
+          c, ∇c = inner_op(ℓ, Y, X, s_val, γ, stochastic=false)
+      end
+      if sum(s_val)<=k && c<bestObj #if feasible and best value
+        bestObj = c; bestSolution=s_val[:]
+      end
+
+      con = @build_constraint(t >= c + dot(∇c, s-s_val))
+      MOI.submit(miop, MOI.LazyConstraint(cb_data), con)
+      cutCount += 1
+    # end
   end
   MOI.set(miop, MOI.LazyConstraintCallback(), outer_approximation)
 
@@ -112,6 +116,8 @@ function oa_formulation(ℓ::LossFunction, Y, X, k::Int, γ;
   #   end
   #   MOI.set(miop, MOI.HeuristicCallback(), warm_start)
   # end
+
+  @show bestObj, sum(bestSolution)
 
   t0 = time()
   optimize!(miop)
