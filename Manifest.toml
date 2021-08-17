@@ -1,28 +1,10 @@
 # This file is machine-generated - editing it directly is not advised
 
-[[AbstractFFTs]]
-deps = ["LinearAlgebra"]
-git-tree-sha1 = "051c95d6836228d120f5f4b984dd5aba1624f716"
-uuid = "621f4979-c628-5d54-868e-fcf4e3e8185c"
-version = "0.5.0"
-
 [[Arpack]]
 deps = ["BinaryProvider", "Libdl", "LinearAlgebra"]
 git-tree-sha1 = "cd64c112638582ba4f0be9c3e20656499c508565"
 uuid = "7d9fca2a-8960-54d3-9f78-7d1dccf2cb97"
 version = "0.3.2"
-
-[[ArrayInterface]]
-deps = ["LinearAlgebra", "Requires", "SparseArrays"]
-git-tree-sha1 = "7b26f0015d9459082a16ebe3fe934c4abb8f1327"
-uuid = "4fba245c-0d91-5ea0-9b3e-6abc04ee57a9"
-version = "2.2.0"
-
-[[AxisAlgorithms]]
-deps = ["LinearAlgebra", "Random", "SparseArrays", "WoodburyMatrices"]
-git-tree-sha1 = "a4d07a1c313392a77042855df46c5f534076fab9"
-uuid = "13072b0f-2c55-5437-9ae7-d433b7a33950"
-version = "1.0.0"
 
 [[Base64]]
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
@@ -454,34 +436,6 @@ uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 deps = ["Serialization"]
 uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
-[[Ratios]]
-git-tree-sha1 = "37d210f612d70f3f7d57d488cb3b6eff56ad4e41"
-uuid = "c84ed2f1-dad5-54f0-aa8e-dbefe2724439"
-version = "0.4.0"
-
-[[RecipesBase]]
-git-tree-sha1 = "54f8ceb165a0f6d083f0d12cb4996f5367c6edbc"
-uuid = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
-version = "1.0.1"
-
-[[RecipesPipeline]]
-deps = ["Dates", "PlotUtils", "RecipesBase"]
-git-tree-sha1 = "9477d23b9ded11153622d8619d0c20c4626a4ac8"
-uuid = "01d81517-befc-4cb6-b9ec-a95719d0359c"
-version = "0.1.10"
-
-[[Reexport]]
-deps = ["Pkg"]
-git-tree-sha1 = "7b1d07f411bc8ddb7977ec7f377b97b158514fe0"
-uuid = "189a3867-3050-52da-a836-e630ba90ab69"
-version = "0.2.0"
-
-[[Requires]]
-deps = ["UUIDs"]
-git-tree-sha1 = "d37400976e98018ee840e0ca4f9d20baa231dc6b"
-uuid = "ae029012-a4dd-5104-9daa-d747884805df"
-version = "1.0.1"
-
 [[Rmath]]
 deps = ["BinaryProvider", "Libdl", "Random", "Statistics"]
 git-tree-sha1 = "2bbddcb984a1d08612d0c4abb5b4774883f6fa98"
@@ -544,12 +498,6 @@ deps = ["Rmath", "SpecialFunctions"]
 git-tree-sha1 = "04a5a8e6ab87966b43f247920eab053fd5fdc925"
 uuid = "4c63d2b9-4356-54db-8cca-17b64c39e42c"
 version = "0.9.5"
-
-[[StatsPlots]]
-deps = ["Clustering", "DataStructures", "DataValues", "Distributions", "Interpolations", "KernelDensity", "MultivariateStats", "Observables", "Plots", "RecipesBase", "RecipesPipeline", "Reexport", "StatsBase", "TableOperations", "Tables", "Widgets"]
-git-tree-sha1 = "b9b7fff81f573465fcac4685df1497d968537a9e"
-uuid = "f3b207a7-027a-5e70-b257-86293d7955fd"
-version = "0.14.6"
 
 [[SubsetSelection]]
 deps = ["Compat", "LIBLINEAR", "LinearAlgebra", "Random", "Statistics", "Test"]

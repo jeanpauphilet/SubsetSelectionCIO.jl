@@ -95,13 +95,20 @@ OUTPUT
   α           - Dual variables
   c           - function value c(s)
   ∇c          - subgradient of c at s"""
-function inner_op(ℓ::LossFunction, Y, X, s, γ)
+function inner_op(ℓ::LossFunction, Y, X, s, γ; stochastic=false)
+    if stochastic
+        inner_op_stochastic(ℓ, Y, X, s, γ)
+    else
+        inner_op_plain(ℓ, Y, X, s, γ)
+    end
+end
+
+function inner_op_plain(ℓ::LossFunction, Y, X, s, γ)
   indices = findall(s .> .5); k = length(indices)
   n,p = size(X)
 
   # Compute optimal dual parameter
   α = sparse_inverse(ℓ, Y, X[:, indices], γ)
-
   c = SubsetSelection.value_dual(ℓ, Y, X, α, indices, k, γ)
 
   ∇c = zeros(p)
@@ -111,6 +118,38 @@ function inner_op(ℓ::LossFunction, Y, X, s, γ)
   return c, ∇c
 end
 
+function inner_op_stochastic(ℓ::LossFunction, Y, X, s, γ;
+      B=10, bSize=max(0.1,2*sum(s)/size(X,1)) )
+  indices = findall(s .> .5); k = length(indices)
+  n,p = size(X)
+
+  # Compute optimal dual parameter
+  w = zeros(k)
+  for b in 1:B
+    subset = rand(n) .< bSize
+    w .+= SubsetSelection.recover_primal(ℓ, Y[subset], X[subset,indices], γ)
+  end
+  w ./= B
+  α = start_primal(ℓ, Y, X[:,indices], γ)
+  c = SubsetSelection.value_dual(ℓ, Y, X, α, indices, k, γ)
+
+  ∇c = zeros(p)
+  for j in 1:p
+    ∇c[j] = -γ/2*dot(X[:,j],α)^2
+  end
+  return c, ∇c
+
+  # Compute optimal dual parameter
+  # w = zeros(k)
+  # c_s = 0; ∇c_s = zeros(p)
+  # for b in 1:B
+  #   subset = rand(n) .< bSize
+  #   c, ∇c = inner_op_plain(ℓ, Y[subset], X[subset,:], s, γ)
+  #   c_s += c; ∇c_s += ∇c
+  # end
+  # c_s /= B; ∇c_s ./= B
+  # return c_s, ∇c_s
+end
 # using LIBLINEAR
 
 # FUNCTION sparse_inverse
@@ -171,6 +210,12 @@ function sparse_inverse(ℓ::Classification, Y, X, γ;
 end
 
 # FUNCTION start_primal
+function start_primal(ℓ::Regression, Y::Array, X::Array, γ::Real)
+  CM = Matrix(I, size(X,2), size(X,2))/γ + X'*X     # The capacitance matrix
+  α = -Y + X*(CM\(X'*Y))            # Matrix Inversion Lemma
+  return α
+end
+
 function start_primal(ℓ::Classification, Y::Array, X::Array, γ::Real)
   n,k = size(X)
   w = SubsetSelection.recover_primal(ℓ, Y, X, γ)
